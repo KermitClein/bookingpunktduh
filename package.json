@@ -1,0 +1,36 @@
+{
+  "name": "booking-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@auth/core": "latest",
+    "@auth/prisma-adapter": "latest",
+    "next": "14.2.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "3.23.8",
+    "@prisma/client": "5.17.0",
+    "prisma": "5.17.0",
+    "date-fns": "3.6.0",
+    "stripe": "15.12.0",
+    "nodemailer": "6.9.14"
+  },
+  "devDependencies": {
+    "tsx": "4.16.2",
+    "typescript": "5.4.5",
+    "@types/node": "20.12.12",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "eslint": "8.57.0"
+  }
+}

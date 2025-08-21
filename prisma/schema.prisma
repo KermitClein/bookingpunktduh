@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ResourceType {
+  car
+  boat
+  other
+}
+
+enum Unit {
+  hour
+  day
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+enum Role {
+  customer
+  admin
+}
+
+model User {
+  id       String   @id @default(cuid())
+  email    String   @unique
+  name     String?
+  role     Role     @default(customer)
+  bookings Booking[]
+  createdAt DateTime @default(now())
+}
+
+model Resource {
+  id        String        @id @default(cuid())
+  type      ResourceType
+  name      String
+  timezone  String        @default("Europe/Berlin")
+  rules     Json
+  pricing   Pricing[]
+  bookings  Booking[]
+  blackouts Blackout[]
+  createdAt DateTime      @default(now())
+}
+
+model Pricing {
+  id         String   @id @default(cuid())
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+  unit       Unit
+  basePrice  Int      // cents
+  seasonal   Json?
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  resource   Resource      @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  startTs    DateTime
+  endTs      DateTime
+  status     BookingStatus @default(pending)
+  totalPrice Int
+  currency   String        @default("EUR")
+  paymentId  String?
+  meta       Json?
+  createdAt  DateTime      @default(now())
+
+  @@index([resourceId, startTs, endTs])
+}
+
+model Blackout {
+  id         String   @id @default(cuid())
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  resourceId String
+  startTs    DateTime
+  endTs      DateTime
+  reason     String?
+}
