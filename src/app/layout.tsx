@@ -1,23 +1,21 @@
 import "./globals.css";
-import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export const metadata = {
   title: "Booking MVP",
-  description: "Auto stundenweise, Segelboot tageweise buchen"
+  description: "Auto stundenweise, Segelboot tageweise buchen",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="de">
-      <body>
-        <header style={{padding:"1rem", borderBottom:"1px solid #ddd"}}>
-          <nav style={{display:"flex", gap:"1rem"}}>
-            <Link href="/">Start</Link>
-            <Link href="/book">Buchen</Link>
-            <Link href="/dashboard">Mein Konto</Link>
-          </nav>
-        </header>
-        <main style={{padding:"1rem"}}>{children}</main>
+      <body className="bg-gray-50">
+        <Navbar />
+        <main className="min-h-screen py-6">{children}</main>
       </body>
     </html>
   );

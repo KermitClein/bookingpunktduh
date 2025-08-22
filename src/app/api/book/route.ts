@@ -1,23 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/src/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { calcTotalCents } from "@/lib/price";
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { resourceId, userId, startTs, endTs, priceCents } = body || {};
-  if (!resourceId || !userId || !startTs || !endTs || !priceCents) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-  }
-  const booking = await prisma.booking.create({
-    data: {
-      resourceId,
-      userId,
-      startTs: new Date(startTs),
-      endTs: new Date(endTs),
-      status: "pending",
-      totalPrice: priceCents,
-      currency: "EUR"
+  try {
+    const { resourceId, startTs, endTs } = await req.json();
+    if (!resourceId || !startTs || !endTs) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
-  });
-  // Stripe session (placeholder)
-  return NextResponse.json({ bookingId: booking.id });
+
+    // Demo-User immer vorhanden machen
+    const user = await prisma.user.upsert({
+      where: { email: "demo@example.com" },
+      update: {},
+      create: { email: "demo@example.com", name: "Demo User" },
+    });
+
+    const resource = await prisma.resource.findUnique({
+      where: { id: resourceId },
+      include: { pricing: true },
+    });
+    if (!resource) return NextResponse.json({ error: "Resource not found" }, { status: 404 });
+
+    const unit: "hour" | "day" = resource.rules?.unit || (resource.type === "car" ? "hour" : "day");
+    const priceRow = resource.pricing.find(p => p.unit === unit);
+    if (!priceRow) return NextResponse.json({ error: "Pricing not set" }, { status: 400 });
+
+    const start = new Date(startTs);
+    const end = new Date(endTs);
+    const totalPrice = calcTotalCents({ unit, basePriceCents: priceRow.basePrice, start, end });
+
+    const booking = await prisma.booking.create({
+      data: {
+        resourceId,
+        userId: user.id,
+        startTs: start,
+        endTs: end,
+        status: "pending",
+        totalPrice,
+        currency: "EUR",
+      },
+    });
+
+    return NextResponse.json({ bookingId: booking.id, totalPrice, currency: "EUR", unit });
+  } catch (e:any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
